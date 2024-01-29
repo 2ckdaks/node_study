@@ -32,7 +32,8 @@ app.get("/shop", (req, res) => {
   res.send("shop page");
 });
 
+//ejs셋팅, 출력한 데이터 전달
 app.get("/list", async (req, res) => {
   let result = await db.collection("post").find().toArray();
-  res.send(result[0].title);
+  res.render("list.ejs", { result: result });
 });

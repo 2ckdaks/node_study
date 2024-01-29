@@ -9,7 +9,7 @@ require("dotenv").config();
 //mongodb 셋팅
 const { MongoClient } = require("mongodb");
 let db;
-const url = process.env.MONGODB_UTL;
+const url = process.env.MONGODB_URL; //민감한 내용은 환경변수 설정
 new MongoClient(url)
   .connect()
   .then((client) => {
@@ -30,4 +30,9 @@ app.get("/", (req, res) => {
 
 app.get("/shop", (req, res) => {
   res.send("shop page");
+});
+
+app.get("/list", async (req, res) => {
+  let result = await db.collection("post").find().toArray();
+  res.send(result[0].title);
 });

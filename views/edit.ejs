@@ -8,7 +8,8 @@
   </head>
   <body class="grey-bg">
     <%- include('nav.ejs') %>
-    <form class="form-box" action="/edit" method="post">
+    <!-- rest api를위해 methodoverride를 사용하여 put경로로 전송 -->
+    <form class="form-box" action="/edit?_method=PUT" method="post">
       <h4>글쓰기</h4>
       <input name="_id" value="<%= result._id %>" />
       <input name="title" value="<%= result.title %>" />

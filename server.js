@@ -10,6 +10,10 @@ require("dotenv").config();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+//methodOverride사용을 위한 셋팅
+const methodOverride = require("method-override");
+app.use(methodOverride("_method"));
+
 //mongodb 셋팅
 const { MongoClient, ObjectId } = require("mongodb");
 let db;
@@ -95,7 +99,7 @@ app.get("/edit/:id", async (req, res) => {
 });
 
 //클라이언트에서 수정된 글 내용을 서버로 전달받아서 db에 업데이트
-app.post("/edit", async (req, res) => {
+app.put("/edit", async (req, res) => {
   try {
     await db
       .collection("post")

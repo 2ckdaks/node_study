@@ -81,3 +81,30 @@ app.get("/detail/:id", async (req, res) => {
     res.send("게시물을 찾을 수 없습니다.");
   }
 });
+
+//게시글 수정을 위해 상세페이지 이동
+app.get("/edit/:id", async (req, res) => {
+  try {
+    let result = await db
+      .collection("post")
+      .findOne({ _id: new ObjectId(req.params) });
+    res.render("edit.ejs", { result: result });
+  } catch (e) {
+    res.send("게시물을 찾을 수 없습니다.");
+  }
+});
+
+//클라이언트에서 수정된 글 내용을 서버로 전달받아서 db에 업데이트
+app.post("/edit/:id", async (req, res) => {
+  try {
+    await db
+      .collection("post")
+      .updateOne(
+        { _id: new ObjectId(req.params) },
+        { $set: { title: req.body.title, content: req.body.content } }
+      );
+    res.redirect("/list");
+  } catch (e) {
+    res.send("수정에 실패하였습니다");
+  }
+});

@@ -72,6 +72,9 @@ app.get("/detail/:id", async (req, res) => {
       .collection("post")
       .findOne({ _id: new ObjectId(req.params) });
     console.log(result);
+    if (result == null) {
+      res.status(400).send("url 입력 에러");
+    }
     res.render("detail.ejs", { result: result });
   } catch (e) {
     console.log(e);

@@ -8,15 +8,9 @@
   </head>
   <body class="grey-bg">
     <%- include('nav.ejs') %>
-    <div class="white-bg">
-      <% for(let i = 0; i < result.length; i++) { %>
-      <div class="list-box">
-        <a href="/detail/<%= result[i]._id %>"
-          ><h4><%= result[i].title %></h4></a
-        >
-        <p><%= result[i].content %></p>
-      </div>
-      <% } %>
+    <div class="detail-bg">
+      <h4><%= result.title %></h4>
+      <p><%= result.content %></p>
     </div>
   </body>
 </html>

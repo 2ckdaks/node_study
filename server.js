@@ -11,7 +11,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 //mongodb 셋팅
-const { MongoClient } = require("mongodb");
+const { MongoClient, ObjectId } = require("mongodb");
 let db;
 const url = process.env.MONGODB_URL; //민감한 내용은 환경변수 설정
 new MongoClient(url)
@@ -63,4 +63,13 @@ app.post("/write", async (req, res) => {
       res.send("에러발생");
     }
   }
+});
+
+//상세페이지 기능을 위한 url 파라미터 사용법
+app.get("/detail/:id", async (req, res) => {
+  let result = await db
+    .collection("post")
+    .findOne({ _id: new ObjectId(req.params) });
+  console.log(result);
+  res.render("detail.ejs", { result: result });
 });

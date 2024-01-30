@@ -49,8 +49,18 @@ app.get("/write", (req, res) => {
 //client에서 전송받은 데이터를 db에 저장
 app.post("/write", async (req, res) => {
   console.log(req.body);
-  await db
-    .collection("post")
-    .insertOne({ title: req.body.title, content: req.body.content });
-  res.send("success");
+  //예외처리
+  if (req.body.title == "") {
+    res.send("제목 누락");
+  } else {
+    try {
+      await db
+        .collection("post")
+        .insertOne({ title: req.body.title, content: req.body.content });
+      res.send("success");
+    } catch (e) {
+      console.log(e);
+      res.send("에러발생");
+    }
+  }
 });

@@ -67,9 +67,14 @@ app.post("/write", async (req, res) => {
 
 //상세페이지 기능을 위한 url 파라미터 사용법
 app.get("/detail/:id", async (req, res) => {
-  let result = await db
-    .collection("post")
-    .findOne({ _id: new ObjectId(req.params) });
-  console.log(result);
-  res.render("detail.ejs", { result: result });
+  try {
+    let result = await db
+      .collection("post")
+      .findOne({ _id: new ObjectId(req.params) });
+    console.log(result);
+    res.render("detail.ejs", { result: result });
+  } catch (e) {
+    console.log(e);
+    res.send("게시물을 찾을 수 없습니다.");
+  }
 });

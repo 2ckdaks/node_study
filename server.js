@@ -95,12 +95,12 @@ app.get("/edit/:id", async (req, res) => {
 });
 
 //클라이언트에서 수정된 글 내용을 서버로 전달받아서 db에 업데이트
-app.post("/edit/:id", async (req, res) => {
+app.post("/edit", async (req, res) => {
   try {
     await db
       .collection("post")
       .updateOne(
-        { _id: new ObjectId(req.params) },
+        { _id: new ObjectId(req.body._id) },
         { $set: { title: req.body.title, content: req.body.content } }
       );
     res.redirect("/list");

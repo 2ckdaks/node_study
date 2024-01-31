@@ -94,6 +94,7 @@ app.get("/edit/:id", async (req, res) => {
       .findOne({ _id: new ObjectId(req.params) });
     res.render("edit.ejs", { result: result });
   } catch (e) {
+    console.log(e);
     res.send("게시물을 찾을 수 없습니다.");
   }
 });
@@ -109,13 +110,21 @@ app.put("/edit", async (req, res) => {
       );
     res.redirect("/list");
   } catch (e) {
+    console.log(e);
     res.send("수정에 실패하였습니다");
   }
 });
 
 //클라이언트에서 delete메서드로 받은후 delete api일시 db에서 알맞은 데이터 삭제
 app.delete("/delete", async (req, res) => {
-  console.log(req.query);
-  await db.collection("post").deleteOne({ _id: new ObjectId(req.query.docid) });
-  res.send("삭제완료");
+  try {
+    console.log(req.query);
+    await db
+      .collection("post")
+      .deleteOne({ _id: new ObjectId(req.query.docid) });
+    res.send("삭제완료");
+  } catch (e) {
+    console.log(e);
+    res.send("게시물 삭제에 실패하였습니다.");
+  }
 });

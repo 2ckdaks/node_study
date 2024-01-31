@@ -15,9 +15,22 @@
           ><h4><%= result[i].title %></h4></a
         >
         <a href="/edit/<%= result[i]._id %>">수정</a>
+        <!-- 같이 담아서 보내줄 데이터 숨겨주는 data-id -->
+        <span class="delete" data-id="<%= result[i]._id %>">🗑️</span>
         <p><%= result[i].content %></p>
       </div>
       <% } %>
     </div>
+
+    <!-- 이벤트 리스너 -->
+    <script>
+      document.querySelectorAll(".delete").forEach(function (element) {
+        element.addEventListener("click", function (e) {
+          fetch("/delete?docid=" + e.target.dataset.id, {
+            method: "DELETE",
+          });
+        });
+      });
+    </script>
   </body>
 </html>

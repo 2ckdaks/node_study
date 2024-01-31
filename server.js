@@ -28,6 +28,47 @@ new MongoClient(url)
     console.log(err);
   });
 
+//passport 라이브러리 셋팅
+const session = require("express-session");
+const passport = require("passport");
+const LocalStrategy = require("passport-local");
+const res = require("express/lib/response");
+//아래 순서 중요
+app.use(passport.initialize());
+app.use(
+  session({
+    secret: "암호화에 쓸 비번", //session 문자열 암호화시 사용할 비번
+    resave: false, //유저가 요청날릴때 세션 데이터 갱신할지 여부
+    saveUninitialized: false, //로그인안해도 세션을 갱신할것인지 여부
+  })
+);
+
+app.use(passport.session());
+
+//passport.authenticate('local')()로 아래 기능 사용 가능
+passport.use(
+  new LocalStrategy(async (입력한아이디, 입력한비번, cb) => {
+    try {
+      let result = await db
+        .collection("user")
+        .findOne({ username: 입력한아이디 });
+      if (!result) {
+        return cb(null, false, { message: "아이디 DB에 없음" });
+      }
+      if (result.password == 입력한비번) {
+        return cb(null, result);
+      } else {
+        return cb(null, false, { message: "비번불일치" });
+      }
+    } catch (e) {
+      res.send("로그인 시도에 실패하였습니다");
+    }
+  })
+);
+
+// --------------------------------------------------------
+// -------------------------------------------------------- 셋팅 경계선
+
 app.listen(8080, () => {
   console.log("http://localhost:8080 에서 서버 실행중");
 });
@@ -138,4 +179,22 @@ app.get("/list/:id", async (req, res) => {
     .limit(3)
     .toArray();
   res.render("list.ejs", { result: result });
+});
+
+//로그인 기능 구현
+app.get("/login", async (req, res) => {
+  res.render("login.ejs");
+});
+app.post("/login", async (req, res, next) => {
+  passport.authenticate("local", (error, user, info) => {
+    // error = 에러시 출력
+    // user = 로그인 성공시 유저 정보
+    // info = 실패시 이유
+    if (error) return res.status(500).json(error);
+    if (!user) return res.status(401).json(info.message);
+    req.logIn(user, (err) => {
+      if (err) return next(err);
+      res.redirect("/");
+    });
+  })(req, res, next);
 });

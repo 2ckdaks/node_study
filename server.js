@@ -56,7 +56,9 @@ passport.use(
       if (!result) {
         return cb(null, false, { message: "아이디 DB에 없음" });
       }
-      if (result.password == 입력한비번) {
+      //로그인시 암호화된 비밀번호 비교를위해 해싱전, 해싱후 비교후 true/false로 남김
+      let hashpassword = await bcrypt.compare(입력한비번, result.password);
+      if (hashpassword == true) {
         return cb(null, result);
       } else {
         return cb(null, false, { message: "비번불일치" });
@@ -88,6 +90,9 @@ passport.deserializeUser(async (user, done) => {
     return null, result; //고로 db에서 한번 조회이후 결과값을 전달
   });
 });
+
+//가입시 비밀번호 암호화를위한 라이브러리 셋팅
+const bcrypt = require("bcrypt");
 
 // --------------------------------------------------------
 // -------------------------------------------------------- 셋팅 경계선
@@ -220,5 +225,18 @@ app.post("/login", async (req, res, next) => {
       if (err) return next(err);
     });
   })(req, res, next);
+  res.redirect("/");
+});
+
+//회원가입 기능 구현
+app.get("/register", (req, res) => {
+  res.render("register.ejs");
+});
+app.post("/register", async (req, res) => {
+  let hash = await bcrypt.hash(req.body.password, 10); //암호화(해싱)하는 함수 + 옆에 숫자(10)은 얼마나 꼬아서 암호화할지 정하는 정도
+  console.log(hash);
+  await db
+    .collection("user")
+    .insertOne({ username: req.body.username, password: hash });
   res.redirect("/");
 });

@@ -128,3 +128,14 @@ app.delete("/delete", async (req, res) => {
     res.send("게시물 삭제에 실패하였습니다.");
   }
 });
+
+//pagenation 구현
+app.get("/list/:id", async (req, res) => {
+  let result = await db
+    .collection("post")
+    .find()
+    .skip((req.params.id - 1) * 5)
+    .limit(3)
+    .toArray();
+  res.render("list.ejs", { result: result });
+});

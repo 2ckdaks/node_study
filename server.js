@@ -40,6 +40,7 @@ app.use(
     secret: "암호화에 쓸 비번", //session 문자열 암호화시 사용할 비번
     resave: false, //유저가 요청날릴때 세션 데이터 갱신할지 여부
     saveUninitialized: false, //로그인안해도 세션을 갱신할것인지 여부
+    cookie: { maxAge: 60 * 60 * 1000 }, //유효기간 설정 미설정시 기본 2주 << 현재 설정은 1시간이됨
   })
 );
 
@@ -65,6 +66,28 @@ passport.use(
     }
   })
 );
+
+//로그인시 세션 생성
+passport.serializeUser((user, done) => {
+  console.log(user); //로그인 시도중인 유저 정보
+  process.nextTick(() => {
+    done(null, { id: user._id, username: user.username }); //해당 줄에 기록된 세션 생성과, 쿠키 전달
+  });
+});
+
+//로그인 성공시 유저에게 받은 쿠키 분석
+//아래 코드덕분에 아무 api에서 req.user작성시 유저정보 출력됨
+//대신 이 코드 아래있는 코드들만 가능
+passport.deserializeUser(async (user, done) => {
+  let result = await db
+    .collection("user")
+    .findOne({ _id: new ObjectId(user.id) });
+  delete user.password; //비밀번호는 소중하니까 지워서 전달
+  process.nextTick(() => {
+    // return done(null, user); 해당줄과같이 바로 user를 전송시 최신업데이트전 정보가 전달될수있음
+    return null, result; //고로 db에서 한번 조회이후 결과값을 전달
+  });
+});
 
 // --------------------------------------------------------
 // -------------------------------------------------------- 셋팅 경계선
@@ -183,6 +206,7 @@ app.get("/list/:id", async (req, res) => {
 
 //로그인 기능 구현
 app.get("/login", async (req, res) => {
+  console.log(req.user);
   res.render("login.ejs");
 });
 app.post("/login", async (req, res, next) => {
@@ -194,7 +218,7 @@ app.post("/login", async (req, res, next) => {
     if (!user) return res.status(401).json(info.message);
     req.logIn(user, (err) => {
       if (err) return next(err);
-      res.redirect("/");
     });
   })(req, res, next);
+  res.redirect("/");
 });

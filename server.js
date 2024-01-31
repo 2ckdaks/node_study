@@ -1,5 +1,9 @@
 const express = require("express");
 const app = express();
+//가입시 비밀번호 암호화를위한 라이브러리 셋팅
+const bcrypt = require("bcrypt");
+//세션을 db에 저장하기위한 라이브러리 셋팅
+const MongoStore = require("connect-mongo");
 
 app.use(express.static(__dirname + "/public")); //public 폴더내 등록된 파일 사용가능
 
@@ -41,6 +45,11 @@ app.use(
     resave: false, //유저가 요청날릴때 세션 데이터 갱신할지 여부
     saveUninitialized: false, //로그인안해도 세션을 갱신할것인지 여부
     cookie: { maxAge: 60 * 60 * 1000 }, //유효기간 설정 미설정시 기본 2주 << 현재 설정은 1시간이됨
+    //db에 로그인 session 저장
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGODB_URL,
+      dbName: "forum",
+    }),
   })
 );
 
@@ -90,9 +99,6 @@ passport.deserializeUser(async (user, done) => {
     return null, result; //고로 db에서 한번 조회이후 결과값을 전달
   });
 });
-
-//가입시 비밀번호 암호화를위한 라이브러리 셋팅
-const bcrypt = require("bcrypt");
 
 // --------------------------------------------------------
 // -------------------------------------------------------- 셋팅 경계선

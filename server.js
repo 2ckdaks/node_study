@@ -107,13 +107,25 @@ app.listen(8080, () => {
   console.log("http://localhost:8080 에서 서버 실행중");
 });
 
+//로그인했는지 검사를위한 미들웨어 함수 등록
+function checkLogin(req, res, next) {
+  if (!req.user) {
+    res.send("로그인을 해주세요");
+  }
+  next(); //미들웨어 함수가 끝나면 다음 진행해주세요 기능 이유는 next()가없으면 무한루프에 빠짐
+}
+
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "/index.html");
 });
 
-app.get("/shop", (req, res) => {
+//로그인했는지 확인을위해 미들웨어 함수 checkLogin 삽입
+app.get("/shop", checkLogin, (req, res) => {
   res.send("shop page");
 });
+
+app.use(checkLogin); //모든 api에 등록하기 귀찮으면 해당줄 코드 삽입으로 해당줄 밑에 api코드들은 모두 미들웨어 함수에 거침
+// app.use('url', checkLogin) //url에 특정api들을 적으면 그 api요청이 왔을때 미들웨어 함수를 실행하게됨(하위 url 자동 포함)
 
 //ejs셋팅, 출력한 데이터 전달
 app.get("/list", async (req, res) => {

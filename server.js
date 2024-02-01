@@ -1,9 +1,9 @@
 const express = require("express");
 const app = express();
 const bcrypt = require("bcrypt"); //가입시 비밀번호 암호화를위한 라이브러리 셋팅
-const MongoStore = require("connect-mongo"); //세션을 db에 저장하기위한 라이브러리 셋팅
 app.use(express.static(__dirname + "/public")); //public 폴더내 등록된 파일 사용가능
 require("dotenv").config(); //환경변수 셋팅
+const MongoStore = require("connect-mongo"); //세션을 db에 저장하기위한 라이브러리 셋팅
 
 //client에서 보낸 데이터를 서버에서 출력을위한 셋팅
 app.use(express.json());
@@ -109,123 +109,15 @@ function checkLogin(req, res, next) {
   }
 }
 
-app.get("/", (req, res) => {
-  // res.sendFile(__dirname + "/index.html");
-  res.render("index.ejs");
-});
-
 // app.use(checkLogin); //모든 api에 등록하기 귀찮으면 해당줄 코드 삽입으로 해당줄 밑에 api코드들은 모두 미들웨어 함수에 거침
 // app.use('url', checkLogin) //url에 특정api들을 적으면 그 api요청이 왔을때 미들웨어 함수를 실행하게됨(하위 url 자동 포함)
 
-//ejs셋팅, 출력한 데이터 전달
-//로그인했는지 확인을위해 미들웨어 함수 checkLogin 삽입
-app.get("/list", checkLogin, async (req, res) => {
-  let result = await db.collection("post").find().toArray();
-  res.render("list.ejs", { result: result });
-});
-
 //router를 사용하여 API들을 다른 파일로 분리하기
+app.use("/", require("./routes/index.js"));
+app.use("/login", require("./routes/login.js"));
+app.use("/register", require("./routes/register.js"));
+app.use("/list", require("./routes/list.js"));
+app.use("/detail", require("./routes/detail.js"));
 app.use("/write", require("./routes/write.js"));
-
-//상세페이지 기능을 위한 url 파라미터 사용법
-app.get("/detail/:id", async (req, res) => {
-  try {
-    let result = await db
-      .collection("post")
-      .findOne({ _id: new ObjectId(req.params) });
-    console.log(result);
-    if (result == null) {
-      res.status(400).send("url 입력 에러");
-    }
-    res.render("detail.ejs", { result: result });
-  } catch (e) {
-    console.log(e);
-    res.send("게시물을 찾을 수 없습니다.");
-  }
-});
-
-//게시글 수정을 위해 상세페이지 이동
-app.get("/edit/:id", async (req, res) => {
-  try {
-    let result = await db
-      .collection("post")
-      .findOne({ _id: new ObjectId(req.params) });
-    res.render("edit.ejs", { result: result });
-  } catch (e) {
-    console.log(e);
-    res.send("게시물을 찾을 수 없습니다.");
-  }
-});
-
-//클라이언트에서 수정된 글 내용을 서버로 전달받아서 db에 업데이트
-app.put("/edit", async (req, res) => {
-  try {
-    await db
-      .collection("post")
-      .updateOne(
-        { _id: new ObjectId(req.body._id) },
-        { $set: { title: req.body.title, content: req.body.content } }
-      );
-    res.redirect("/list");
-  } catch (e) {
-    console.log(e);
-    res.send("수정에 실패하였습니다");
-  }
-});
-
-//클라이언트에서 delete메서드로 받은후 delete api일시 db에서 알맞은 데이터 삭제
-app.delete("/delete", async (req, res) => {
-  try {
-    console.log(req.query);
-    await db
-      .collection("post")
-      .deleteOne({ _id: new ObjectId(req.query.docid) });
-    res.send("삭제완료");
-  } catch (e) {
-    console.log(e);
-    res.send("게시물 삭제에 실패하였습니다.");
-  }
-});
-
-//pagenation 구현
-app.get("/list/:id", async (req, res) => {
-  let result = await db
-    .collection("post")
-    .find()
-    .skip((req.params.id - 1) * 5)
-    .limit(3)
-    .toArray();
-  res.render("list.ejs", { result: result });
-});
-
-//로그인 기능 구현
-app.get("/login", async (req, res) => {
-  console.log(req.user);
-  res.render("login.ejs");
-});
-app.post("/login", async (req, res, next) => {
-  passport.authenticate("local", (error, user, info) => {
-    // error = 에러시 출력
-    // user = 로그인 성공시 유저 정보
-    // info = 실패시 이유
-    if (error) return res.status(500).json("/login" + error);
-    if (!user) return res.status(401).json("/login" + info.message);
-    req.logIn(user, (err) => {
-      if (err) return next(err);
-      res.redirect("/");
-    });
-  })(req, res, next);
-});
-
-//회원가입 기능 구현
-app.get("/register", (req, res) => {
-  res.render("register.ejs");
-});
-app.post("/register", async (req, res) => {
-  let hash = await bcrypt.hash(req.body.password, 10); //암호화(해싱)하는 함수 + 옆에 숫자(10)은 얼마나 꼬아서 암호화할지 정하는 정도
-  console.log(hash);
-  await db
-    .collection("user")
-    .insertOne({ username: req.body.username, password: hash });
-  res.redirect("/");
-});
+app.use("/edit", require("./routes/edit.js"));
+app.use("/delete", require("./routes/delete.js"));

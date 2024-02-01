@@ -34,14 +34,23 @@ const upload = multer({
   }),
 });
 
-router.get("/", (req, res) => {
+//로그인했는지 검사를위한 미들웨어 함수 등록
+function checkLogin(req, res, next) {
+  if (req.user) {
+    next();
+  } else {
+    res.render("login.ejs"); //미들웨어 함수가 끝나면 다음 진행해주세요 기능 이유는 next()가없으면 무한루프에 빠짐
+  }
+}
+
+router.get("/", checkLogin, (req, res) => {
   res.render("write.ejs");
 });
 
 //client에서 전송받은 데이터를 db에 저장
 //아래 미들웨어 upload.single은 아래 api로 전송될때 이미지를 담고있음
 //여러장의 이미지 업로드는 upload.array('img1', 2) 사용 + 갯수 제한 가능 -> 출력은 req.files
-router.post("/", upload.single("img1"), async (req, res) => {
+router.post("/", checkLogin, upload.single("img1"), async (req, res) => {
   console.log(req.body);
   console.log(req.file);
   //예외처리

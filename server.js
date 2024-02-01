@@ -71,7 +71,7 @@ passport.use(
         return cb(null, false, { message: "비번불일치" });
       }
     } catch (e) {
-      res.send("로그인 시도에 실패하였습니다");
+      return cb(new Error("로그인 시도에 실패하였습니다"));
     }
   })
 );
@@ -94,7 +94,7 @@ passport.deserializeUser(async (user, done) => {
   delete user.password; //비밀번호는 소중하니까 지워서 전달
   process.nextTick(() => {
     // return done(null, user); 해당줄과같이 바로 user를 전송시 최신업데이트전 정보가 전달될수있음
-    return null, result; //고로 db에서 한번 조회이후 결과값을 전달
+    return done(null, result); //고로 db에서 한번 조회이후 결과값을 전달
   });
 });
 
@@ -102,10 +102,11 @@ passport.deserializeUser(async (user, done) => {
 
 //로그인했는지 검사를위한 미들웨어 함수 등록
 function checkLogin(req, res, next) {
-  if (!req.user) {
-    res.send("로그인을 해주세요");
+  if (req.user) {
+    next();
+  } else {
+    res.render("login.ejs"); //미들웨어 함수가 끝나면 다음 진행해주세요 기능 이유는 next()가없으면 무한루프에 빠짐
   }
-  next(); //미들웨어 함수가 끝나면 다음 진행해주세요 기능 이유는 next()가없으면 무한루프에 빠짐
 }
 
 app.get("/", (req, res) => {
@@ -113,16 +114,12 @@ app.get("/", (req, res) => {
   res.render("index.ejs");
 });
 
-//로그인했는지 확인을위해 미들웨어 함수 checkLogin 삽입
-app.get("/shop", checkLogin, (req, res) => {
-  res.send("shop page");
-});
-
 // app.use(checkLogin); //모든 api에 등록하기 귀찮으면 해당줄 코드 삽입으로 해당줄 밑에 api코드들은 모두 미들웨어 함수에 거침
 // app.use('url', checkLogin) //url에 특정api들을 적으면 그 api요청이 왔을때 미들웨어 함수를 실행하게됨(하위 url 자동 포함)
 
 //ejs셋팅, 출력한 데이터 전달
-app.get("/list", async (req, res) => {
+//로그인했는지 확인을위해 미들웨어 함수 checkLogin 삽입
+app.get("/list", checkLogin, async (req, res) => {
   let result = await db.collection("post").find().toArray();
   res.render("list.ejs", { result: result });
 });
@@ -211,13 +208,13 @@ app.post("/login", async (req, res, next) => {
     // error = 에러시 출력
     // user = 로그인 성공시 유저 정보
     // info = 실패시 이유
-    if (error) return res.status(500).json(error);
-    if (!user) return res.status(401).json(info.message);
+    if (error) return res.status(500).json("/login" + error);
+    if (!user) return res.status(401).json("/login" + info.message);
     req.logIn(user, (err) => {
       if (err) return next(err);
+      res.redirect("/");
     });
   })(req, res, next);
-  res.redirect("/");
 });
 
 //회원가입 기능 구현

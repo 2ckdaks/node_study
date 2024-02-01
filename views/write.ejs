@@ -8,10 +8,17 @@
   </head>
   <body class="grey-bg">
     <%- include('nav.ejs') %>
-    <form class="form-box" action="/write" method="post">
+    <form
+      class="form-box"
+      action="/write"
+      method="post"
+      enctype="multipart/form-data"
+    >
       <h4>글쓰기</h4>
       <input name="title" />
       <input name="content" />
+      <!-- 이미지 여러장 전송시에는 multiple이라는 속성 추가 -->
+      <input type="file" name="img1" accept="image/*" />
       <button type="submit">전송</button>
     </form>
   </body>

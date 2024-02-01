@@ -100,6 +100,28 @@ passport.deserializeUser(async (user, done) => {
   });
 });
 
+//이미지 업로드를 위한 s3 셋팅
+const { S3Client } = require("@aws-sdk/client-s3");
+const multer = require("multer");
+const multerS3 = require("multer-s3");
+const s3 = new S3Client({
+  region: "ap-northeast-2",
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
+
+const upload = multer({
+  storage: multerS3({
+    s3: s3,
+    bucket: "nodejsforum",
+    key: function (요청, file, cb) {
+      cb(null, Date.now().toString()); //업로드시 파일명 변경가능
+    },
+  }),
+});
+
 // --------------------------------------------------------
 // -------------------------------------------------------- 셋팅 경계선
 
@@ -116,7 +138,8 @@ function checkLogin(req, res, next) {
 }
 
 app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/index.html");
+  // res.sendFile(__dirname + "/index.html");
+  res.render("index.ejs");
 });
 
 //로그인했는지 확인을위해 미들웨어 함수 checkLogin 삽입
@@ -124,7 +147,7 @@ app.get("/shop", checkLogin, (req, res) => {
   res.send("shop page");
 });
 
-app.use(checkLogin); //모든 api에 등록하기 귀찮으면 해당줄 코드 삽입으로 해당줄 밑에 api코드들은 모두 미들웨어 함수에 거침
+// app.use(checkLogin); //모든 api에 등록하기 귀찮으면 해당줄 코드 삽입으로 해당줄 밑에 api코드들은 모두 미들웨어 함수에 거침
 // app.use('url', checkLogin) //url에 특정api들을 적으면 그 api요청이 왔을때 미들웨어 함수를 실행하게됨(하위 url 자동 포함)
 
 //ejs셋팅, 출력한 데이터 전달
@@ -138,8 +161,11 @@ app.get("/write", (req, res) => {
 });
 
 //client에서 전송받은 데이터를 db에 저장
-app.post("/write", async (req, res) => {
+//아래 미들웨어 upload.single은 아래 api로 전송될때 이미지를 담고있음
+//여러장의 이미지 업로드는 upload.array('img1', 2) 사용 + 갯수 제한 가능 -> 출력은 req.files
+app.post("/write", upload.single("img1"), async (req, res) => {
   console.log(req.body);
+  console.log(req.file);
   //예외처리
   if (req.body.title == "") {
     res.send("제목 누락");
@@ -147,7 +173,11 @@ app.post("/write", async (req, res) => {
     try {
       await db
         .collection("post")
-        .insertOne({ title: req.body.title, content: req.body.content });
+        .insertOne({
+          title: req.body.title,
+          content: req.body.content,
+          img: req.file.location,
+        });
       res.send("success");
     } catch (e) {
       console.log(e);

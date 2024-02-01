@@ -1,4 +1,16 @@
 const router = require("express").Router();
+let connectDB = require("./../database.js");
+
+//mongodb 셋팅
+let db;
+connectDB
+  .then((client) => {
+    console.log("DB연결성공");
+    db = client.db("forum");
+  })
+  .catch((err) => {
+    console.log(err);
+  });
 
 //이미지 업로드를 위한 s3 셋팅
 const { S3Client } = require("@aws-sdk/client-s3");
@@ -22,14 +34,14 @@ const upload = multer({
   }),
 });
 
-router.get("/write", (req, res) => {
+router.get("/", (req, res) => {
   res.render("write.ejs");
 });
 
 //client에서 전송받은 데이터를 db에 저장
 //아래 미들웨어 upload.single은 아래 api로 전송될때 이미지를 담고있음
 //여러장의 이미지 업로드는 upload.array('img1', 2) 사용 + 갯수 제한 가능 -> 출력은 req.files
-router.post("/write", upload.single("img1"), async (req, res) => {
+router.post("/", upload.single("img1"), async (req, res) => {
   console.log(req.body);
   console.log(req.file);
   //예외처리

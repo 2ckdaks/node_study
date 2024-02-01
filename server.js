@@ -1,14 +1,9 @@
 const express = require("express");
 const app = express();
-//가입시 비밀번호 암호화를위한 라이브러리 셋팅
-const bcrypt = require("bcrypt");
-//세션을 db에 저장하기위한 라이브러리 셋팅
-const MongoStore = require("connect-mongo");
-
+const bcrypt = require("bcrypt"); //가입시 비밀번호 암호화를위한 라이브러리 셋팅
+const MongoStore = require("connect-mongo"); //세션을 db에 저장하기위한 라이브러리 셋팅
 app.use(express.static(__dirname + "/public")); //public 폴더내 등록된 파일 사용가능
-
-//환경변수 셋팅
-require("dotenv").config();
+require("dotenv").config(); //환경변수 셋팅
 
 //client에서 보낸 데이터를 서버에서 출력을위한 셋팅
 app.use(express.json());
@@ -20,13 +15,16 @@ app.use(methodOverride("_method"));
 
 //mongodb 셋팅
 const { MongoClient, ObjectId } = require("mongodb");
+let connectDB = require("./database.js");
 let db;
-const url = process.env.MONGODB_URL; //민감한 내용은 환경변수 설정
-new MongoClient(url)
-  .connect()
+connectDB
   .then((client) => {
     console.log("DB연결성공");
     db = client.db("forum");
+
+    app.listen(8080, () => {
+      console.log("http://localhost:8080 에서 서버 실행중");
+    });
   })
   .catch((err) => {
     console.log(err);
@@ -100,12 +98,7 @@ passport.deserializeUser(async (user, done) => {
   });
 });
 
-// --------------------------------------------------------
 // -------------------------------------------------------- 셋팅 경계선
-
-app.listen(8080, () => {
-  console.log("http://localhost:8080 에서 서버 실행중");
-});
 
 //로그인했는지 검사를위한 미들웨어 함수 등록
 function checkLogin(req, res, next) {
@@ -135,7 +128,7 @@ app.get("/list", async (req, res) => {
 });
 
 //router를 사용하여 API들을 다른 파일로 분리하기
-app.use("/", require("./routes/write.js"));
+app.use("/write", require("./routes/write.js"));
 
 //상세페이지 기능을 위한 url 파라미터 사용법
 app.get("/detail/:id", async (req, res) => {

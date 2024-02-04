@@ -42,5 +42,18 @@
           location.href = "/search?val=" + 입력한거;
         });
     </script>
+    <script>
+      let eventSource = new EventSource("/stream/list");
+      eventSource.addEventListener("msg", function (e) {
+        console.log(e.data);
+        let newResult = JSON.parse(e.data);
+        document
+          .querySelector(".white-bg")
+          .insertAdjacentHTML(
+            "afterbegin",
+            `<div class='list-box'><h4>${newResult.title}</h4></div>`
+          );
+      });
+    </script>
   </body>
 </html>

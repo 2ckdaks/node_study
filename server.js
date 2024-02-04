@@ -140,3 +140,30 @@ io.on("connection", (socket) => {
     io.to(data.room).emit("message-broadcast", data.msg);
   });
 });
+
+//또다른 실시간 데이터 전송 SSE(server sent events)
+app.get("/stream/list", (req, res) => {
+  res.writeHead(200, {
+    Connection: "keep-alive",
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+  });
+
+  //1초마다 아래 코드 실행
+  // setInterval(() => {
+  //   res.write("event: msg\n");
+  //   res.write("data: 바보\n\n");
+  // }, 1000);
+
+  // res.write("event: msg\n");
+  // res.write("data: 바보\n\n");
+
+  //db가 바뀌는것을 감지
+  const 찾을문서 = [{ $match: { operationType: "insert" } }];
+  let changeStream = db.collection("post").watch(찾을문서);
+  changeStream.on("change", (result) => {
+    console.log("DB변동생김");
+    res.write("event: msg\n");
+    res.write(`data: ${JSON.stringify(result.fullDocument)}\n\n`);
+  });
+});

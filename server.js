@@ -129,29 +129,7 @@ app.use("/edit", require("./routes/edit.js"));
 app.use("/delete", require("./routes/delete.js"));
 app.use("/search", require("./routes/search.js"));
 app.use("/comment", require("./routes/comment.js"));
-
-app.get("/chat/request", async (req, res) => {
-  await db.collection("chatroom").insertOne({
-    member: [req.user._id, new ObjectId(req.query.writerId)],
-    date: new Date(),
-  });
-  res.redirect("/chat/list");
-});
-app.get("/chat/list", async (req, res) => {
-  let result = await db
-    .collection("chatroom")
-    .find({
-      member: req.user._id, //arr여도 내 아이디가 포함된거를 꺼내줌
-    })
-    .toArray();
-  res.render("chatList.ejs", { result: result });
-});
-app.get("/chat/detail/:id", async (req, res) => {
-  let result = await db
-    .collection("chatroom")
-    .findOne({ _id: new ObjectId(req.params.id) });
-  res.render("chatDetail.ejs", { result: result });
-});
+app.use("/chat", require("./routes/chat.js"));
 
 io.on("connection", (socket) => {
   socket.on("ask-join", (data) => {

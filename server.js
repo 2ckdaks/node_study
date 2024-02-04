@@ -13,6 +13,12 @@ app.use(express.urlencoded({ extended: true }));
 const methodOverride = require("method-override");
 app.use(methodOverride("_method"));
 
+//Socket.io 셋팅
+const { createServer } = require("http");
+const { Server } = require("socket.io");
+const server = createServer(app);
+const io = new Server(server);
+
 //mongodb 셋팅
 const { MongoClient, ObjectId } = require("mongodb");
 let connectDB = require("./database.js");
@@ -22,7 +28,7 @@ connectDB
     console.log("DB연결성공");
     db = client.db("forum");
 
-    app.listen(8080, () => {
+    server.listen(8080, () => {
       console.log("http://localhost:8080 에서 서버 실행중");
     });
   })
@@ -123,3 +129,36 @@ app.use("/edit", require("./routes/edit.js"));
 app.use("/delete", require("./routes/delete.js"));
 app.use("/search", require("./routes/search.js"));
 app.use("/comment", require("./routes/comment.js"));
+
+app.get("/chat/request", async (req, res) => {
+  await db.collection("chatroom").insertOne({
+    member: [req.user._id, new ObjectId(req.query.writerId)],
+    date: new Date(),
+  });
+  res.redirect("/chat/list");
+});
+app.get("/chat/list", async (req, res) => {
+  let result = await db
+    .collection("chatroom")
+    .find({
+      member: req.user._id, //arr여도 내 아이디가 포함된거를 꺼내줌
+    })
+    .toArray();
+  res.render("chatList.ejs", { result: result });
+});
+app.get("/chat/detail/:id", async (req, res) => {
+  let result = await db
+    .collection("chatroom")
+    .findOne({ _id: new ObjectId(req.params.id) });
+  res.render("chatDetail.ejs", { result: result });
+});
+
+io.on("connection", (socket) => {
+  socket.on("ask-join", (data) => {
+    socket.join(data);
+  });
+  socket.on("message-send", (data) => {
+    console.log(data);
+    io.to(data.room).emit("message-broadcast", data.msg);
+  });
+});

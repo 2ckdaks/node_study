@@ -23,7 +23,7 @@ function checkLogin(req, res, next) {
 }
 
 //클라이언트에서 delete메서드로 받은후 delete api일시 db에서 알맞은 데이터 삭제
-router.delete("/delete", checkLogin, async (req, res) => {
+router.delete("/", checkLogin, async (req, res) => {
   try {
     console.log(req.query);
     await db.collection("post").deleteOne({

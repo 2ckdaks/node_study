@@ -121,3 +121,4 @@ app.use("/detail", require("./routes/detail.js"));
 app.use("/write", require("./routes/write.js"));
 app.use("/edit", require("./routes/edit.js"));
 app.use("/delete", require("./routes/delete.js"));
+app.use("/search", require("./routes/search.js"));

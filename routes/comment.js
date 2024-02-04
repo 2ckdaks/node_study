@@ -22,27 +22,14 @@ function checkLogin(req, res, next) {
   }
 }
 
-//상세페이지 기능을 위한 url 파라미터 사용법
-router.get("/:id", checkLogin, async (req, res) => {
-  try {
-    let result = await db
-      .collection("post")
-      .findOne({ _id: new ObjectId(req.params) });
-    let result2 = await db
-      .collection("comment")
-      .find({
-        parentId: new ObjectId(req.params.id),
-      })
-      .toArray();
-    if (result == null) {
-      res.status(400).send("url 입력 에러");
-    } else {
-      res.render("detail.ejs", { result: result, result2: result2 });
-    }
-  } catch (e) {
-    console.log(e);
-    res.send("게시물을 찾을 수 없습니다.");
-  }
+router.post("/", async (req, res) => {
+  await db.collection("comment").insertOne({
+    content: req.body.content,
+    writerId: new ObjectId(req.user.id),
+    writer: req.user.username,
+    parentId: new ObjectId(req.body.parentId),
+  });
+  res.redirect("back");
 });
 
 module.exports = router;

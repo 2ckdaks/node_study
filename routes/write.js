@@ -44,6 +44,7 @@ function checkLogin(req, res, next) {
 }
 
 router.get("/", checkLogin, (req, res) => {
+  console.log(req.user);
   res.render("write.ejs");
 });
 
@@ -53,6 +54,7 @@ router.get("/", checkLogin, (req, res) => {
 router.post("/", checkLogin, upload.single("img1"), async (req, res) => {
   console.log(req.body);
   console.log(req.file);
+  console.log(req.user);
   //예외처리
   if (req.body.title == "") {
     res.send("제목 누락");
@@ -61,7 +63,9 @@ router.post("/", checkLogin, upload.single("img1"), async (req, res) => {
       await db.collection("post").insertOne({
         title: req.body.title,
         content: req.body.content,
-        img: req.file.location,
+        img: req.file ? req.file.location : "",
+        user: req.user._id,
+        username: req.user.username,
       });
       res.send("success");
     } catch (e) {

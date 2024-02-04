@@ -26,9 +26,10 @@ function checkLogin(req, res, next) {
 router.delete("/delete", checkLogin, async (req, res) => {
   try {
     console.log(req.query);
-    await db
-      .collection("post")
-      .deleteOne({ _id: new ObjectId(req.query.docid) });
+    await db.collection("post").deleteOne({
+      _id: new ObjectId(req.query.docid),
+      user: new ObjectId(req.user._id), // 본인이 작성한 글만 삭제권한 부여
+    });
     res.send("삭제완료");
   } catch (e) {
     console.log(e);
